@@ -18,17 +18,15 @@ var GitHub = require('github-api');
 const Entities = require('html-entities').XmlEntities;
 const decoder = new Entities();
 
-const apiAiAccessToken = "api ai token";
+const apiAiAccessToken = process.env.accesstoken;
+const slackBotKey = process.env.slackkey;
 
-const slackBotKey = "slack token";
+var github = new GitHub({ token: process.env.githubtoken});
 
-var github = new GitHub({ token: "github token"});
-
+console.log(process.env.githubtoken);
 const devConfig = process.env.DEVELOPMENT_CONFIG == 'true';
 
 const npmKeyword = require('npm-keyword');
-
-//var github = new GitHub({ token: "github-api-token"});
 
 const apiaiOptions = {};
 
@@ -164,6 +162,7 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention', 'ambien
                     bot.reply(message, e)
                   });
               } else if (searchUser) {
+                console.log(text);
                   search.forUsers({ q: text}).then(
                     r => {
                       let user = r.data[0]['html_url'];
