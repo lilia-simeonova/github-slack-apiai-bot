@@ -18,11 +18,11 @@ var GitHub = require('github-api');
 const Entities = require('html-entities').XmlEntities;
 const decoder = new Entities();
 
-const apiAiAccessToken = "cae28d128f6a410280e9f9ba275fbfbc";
+const apiAiAccessToken = "api ai token";
 
-const slackBotKey = "xoxb-155149966694-uT42Cr8Isk8gWbXq47HVF0cd";
+const slackBotKey = "slack token";
 
-var github = new GitHub({ token: "a5bf648dd8e0e838b9b9632a80a25c146928848e"});
+var github = new GitHub({ token: "github token"});
 
 const devConfig = process.env.DEVELOPMENT_CONFIG == 'true';
 
