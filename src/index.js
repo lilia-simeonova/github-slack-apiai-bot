@@ -21,7 +21,7 @@ const decoder = new Entities();
 const apiAiAccessToken = process.env.accesstoken;
 const slackBotKey = process.env.slackkey;
 
-var github = new GitHub({ token: process.env.githubtoken});
+const github = new GitHub({ token: process.env.githubtoken});
 
 console.log(process.env.githubtoken);
 const devConfig = process.env.DEVELOPMENT_CONFIG == 'true';
@@ -66,7 +66,7 @@ function isDefined(obj) {
 }
 
 const TimeOutError = 'I couldn\'t resolve your request';
-const TimeoutDuration = 5000;
+const TimeoutDuration = 90000;
 
 function timeoutAfter(duration) {
   return new Promise((_, reject) => setTimeout(() => reject(TimeOutError), duration));
@@ -145,11 +145,12 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention', 'ambien
               if (searchProject) {
                 console.log(searchProject, text)
                 firstReady(
-                  search.forRepositories({ q: text, sort: 'stars', order: 'desc' }),
+                  search.forRepositories({ q: text, sort: 'stars', order: 'desc', page:1, per_page: 5}),
                     timeoutAfter(TimeoutDuration)
                   )
                   .then(r => { 
                     if (r.data) {
+                      console.log(r.data);
                       responseText = 'Here are the first 3 result:' + '\n' + r.data[0]['full_name'] + '\n' + r.data[1]['full_name'] + '\n' + r.data[2]['full_name'];
                       bot.reply(message, responseText);
                     } else {
@@ -158,16 +159,21 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention', 'ambien
                     }
                   })
                   .catch(e => {
+                    console.log(e);
                     console.log('Something went wrong');
                     bot.reply(message, e)
                   });
               } else if (searchUser) {
                 console.log(text);
-                  search.forUsers({ q: text}).then(
+                  firstReady(
+                    search.forUsers({ q: text}),
+                    timeoutAfter(TimeoutDuration)
+                  )
+                  .then(
                     r => {
                       let user = r.data[0]['html_url'];
                       console.log(user);
-                      if(user) {
+                      if (user) {
                         let responseText = user;
                         bot.reply(message, responseText);
                       } else {
@@ -177,30 +183,38 @@ controller.hears(['.*'], ['direct_message', 'direct_mention', 'mention', 'ambien
                   })       
               }
             } else if(action === 'follow') {
-              var result = response.result.parameters['text'];
-              console.log('result is:',result);
-              if(result) {
-                  //console.log(result);
-                var user = github.getUser(result);
-                  //console.log(user);
-                user.follow().then( 
-                r => { 
-                  console.log(r);
-                  if(r) {
-                    let responseText = 'You successfuly followed ' + result;
-                    bot.reply(message, responseText);
-                  } else {
-                    responseText = 'There was some problem. Please try again.';
-                    bot.reply(message, responseText);
-                  }  
-                });
+                var result = response.result.parameters['text'];
+                console.log('result is:',result);
+                if(result) {
+                    //console.log(result);
+                  var user = github.getUser(result);
+                    //console.log(user);   
+                  firstReady(
+                    user.follow(),
+                    timeoutAfter(TimeoutDuration)
+                  )
+                  .then( 
+                  r => { 
+                    console.log(r);
+                    if(r) {
+                      let responseText = 'You successfuly followed ' + result;
+                      bot.reply(message, responseText);
+                    } else {
+                      responseText = 'There was some problem. Please try again.';
+                      bot.reply(message, responseText);
+                    }  
+                  });
               }   
             } else if(action === 'createRepo') {
               var result = response.result.parameters['text'];
               if(result) {
                 console.log(result);
                 var user = github.getUser();
-                user.createRepo({name: result}).then( r => {
+                firstReady(
+                  user.createRepo({name: result}),
+                  timeoutAfter(TimeoutDuration)
+                )
+                .then( r => {
                   console.log(r);
                   let responseText = "You successfuly created repo " + result;
                   bot.reply(message, responseText);
